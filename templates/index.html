@@ -4,6 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>CFPS</title>
+	<link rel="stylesheet" href="styles.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-KK94CHFLLe+nY2dmCWGMq91rCGa5gtU4mk92HdvYe+M/SXH301p5ILy+dN9+nJOZ" crossorigin="anonymous">
   </head>
   <style>
@@ -18,15 +19,16 @@
 			text-align: center;
 		}
 		.card{
-		margin-left:505px;
-		margin-top: 20px;
-		color: white;
+		margin-left:40px;
+		margin-top: 60px;
+		background-color: rgba(0, 0, 0, 0);
+		color: rgb(29, 167, 198);
 		}
 		.container{
 		background:#edf2f7;
 		background-color: rgba(0, 0, 0, 0.8);
 		font-weight: bold;
-		padding-bottom:10px;
+		padding-bottom:60px;
 		border-radius: 15px;
 		}
 
@@ -34,13 +36,23 @@
 			color:#edf2f7;
 			font-size: large;
 		}
+		.crop-image,
+  .fertilizer-image {
+    width: 300px;
+    height: 200px; /* Adjust the maximum height as needed */
+  }
+  .card-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
 
 	</style>
 
 
 
 
-<body style="background-image: url('/static/agri3.jpg'); background-size: 100% auto; background-position: center; background-repeat: no-repeat;">
+<body style="background-image: url('/static/agri3.jpg'); background-size: 100% auto; background-position: center; background-repeat: no-repeat;height: 560px;">
 
   <!--=======================navbar=====================================================-->
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
@@ -71,68 +83,33 @@
 
 <!--==========================================================================================-->
   <div class="container my-3 mt-3">
-      <h1 class="text-success">Crop Recommendation System <span class="text-success">🌱</span></h1>
-
-<!--      adding form-->
-      <form action="/predict" method="POST">
-          <div class="row">
-              <div class="col-md-4">
-					<label for="Nitrogen">Nitrogen</label>
-					<input type="number" id="Nitrogen" name="Nitrogen" placeholder="Enter Nitrogen" class="form-control" required step="0">
-				</div>
-               <div class="col-md-4">
-					<label for="Phosporus">Phosphorus</label>
-					<input type="number" id="Phosporus" name="Phosporus" placeholder="Enter Phosphorus" class="form-control" required step="00">
-				</div>
-				<div class="col-md-4">
-					<label for="Potassium">Potassium</label>
-					<input type="number" id="Potassium" name="Potassium" placeholder="Enter Potassium" class="form-control" required step="0">
-				</div>
-          </div>
-
-          <div class="row mt-4">
-				<div class="col-md-4">
-					<label for="Temperature">Temperature</label>
-					<input type="number" step="0.01" id="Temperature" name="Temperature" placeholder="Enter Temperature in °C" class="form-control" required step="0">
-				</div>
-				<div class="col-md-4">
-					<label for="Humidity">Humidity</label>
-					<input type="number" step="0.01" id="Humidity" name="Humidity" placeholder="Enter Humidity in %" class="form-control" required step="0">
-				</div>
-				<div class="col-md-4">
-					<label for="pH">pH</label>
-					<input type="number" step="0.01" id="Ph" name="Ph" placeholder="Enter pH value" class="form-control" required step="0">
-				</div>
+      <h1 class="text-success">Crop and Fertilizer Recommendation System </h1>
+	  
+	  <div class="row">
+		
+		<div class="col-md-6">
+		  <div class="card">
+			<div class="card-body">
+			  <img src="static/crop_front.png" alt="Crop Image" class="crop-image">
+			  <h5 class="card-title">Crop Recommendation</h5>
+			  <p class="card-text">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla convallis libero libero, at mattis urna scelerisque id.</p>
+			  <a href="/crop" class="btn btn-primary">View Recommendations</a>
 			</div>
-
-          <div class="row mt-4">
-				<div class="col-md-4">
-					<label for="Rainfall">Rainfall</label>
-					<input type="number" step="0.01" id="Rainfall" name="Rainfall" placeholder="Enter Rainfall in mm" class="form-control" required>
-				</div>
-			</div>
-
-
-
-           <div class="row mt-4">
-
-           <div class="col-md-12 text-center">
-				<button type="submit" class="btn btn-primary btn-lg">Get Recommendation</button>
-			</div>
-			</div>
-      </form>
-
-
-
-       {% if result %}
-		<div class="card bg-dark" style="width: 18rem; ">
-		  <img src="{{url_for('static', filename='img.jpg')}}" class="card-img-top" alt="...">
-		  <div class="card-body">
-			<h5 class="card-title">Recommend Crop for cultivation is:</h5>
-			<p class="card-text">{{ result }}</p>
 		  </div>
 		</div>
-	   {% endif %}
+	
+		<div class="col-md-6">
+		  <div class="card">
+			<div class="card-body">
+			  <img src="static/fert_front.jpg" alt="Crop Image" class="crop-image">
+			  <h5 class="card-title">Fertilizer Recommendation</h5>
+			  <p class="card-text">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla convallis libero libero, at mattis urna scelerisque id.</p>
+			  <button class="btn btn-primary">View Recommendations</button>
+			</div>
+		  </div>
+		</div>
+	  </div>
+	  
   </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ENjdO4Dr2bkBIFxQpeoTz1HIcje39Wm4jDKdf19U8gI4ddQ3GYNS7NTKfAdVQSZe" crossorigin="anonymous"></script>
