@@ -1,117 +1,86 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>CFPS</title>
-	<link rel="stylesheet" href="styles.css">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-KK94CHFLLe+nY2dmCWGMq91rCGa5gtU4mk92HdvYe+M/SXH301p5ILy+dN9+nJOZ" crossorigin="anonymous">
-  </head>
-  <style>
-		h1 {
-			color: rgb(102, 160, 128);
-			text-align: center;
-		}
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CFPS - Crop and Fertilizer Recommendation System</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/chatbot.css') }}">
+</head>
+<body class="bg-gray-100">
 
-		.warning {
-			color: red;
-			font-weight: bold;
-			text-align: center;
-		}
-		.card{
-		margin-left:40px;
-		margin-top: 60px;
-		background-color: rgba(0, 0, 0, 0);
-		color: rgb(29, 167, 198);
-		}
-		.container{
-		background:#edf2f7;
-		background-color: rgba(0, 0, 0, 0.8);
-		font-weight: bold;
-		padding-bottom:60px;
-		border-radius: 15px;
-		}
+    <!-- Navbar -->
+    <nav class="bg-green-600 shadow-lg">
+        <div class="container mx-auto px-6 py-3">
+            <div class="flex justify-between items-center">
+                <a href="/" class="text-white text-2xl font-bold">CFPS</a>
+                <div class="flex space-x-4">
+                    <a href="/" class="text-white hover:text-green-200">Home</a>
+                    <a href="#" class="text-white hover:text-green-200">Contact</a>
+                    <a href="#" class="text-white hover:text-green-200">About</a>
+                </div>
+                <div>
+                    <input class="px-4 py-2 rounded-lg" type="text" placeholder="Search">
+                    <button class="bg-white text-green-600 px-4 py-2 rounded-lg ml-2">Search</button>
+                </div>
+            </div>
+        </div>
+    </nav>
 
-		.row{
-			color:#edf2f7;
-			font-size: large;
-		}
-		.crop-image,
-  .fertilizer-image {
-    width: 300px;
-    height: 200px; /* Adjust the maximum height as needed */
-  }
-  .card-body {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-	</style>
-
-
-
-
-<body style="background-image: url('/static/agri3.jpg'); background-size: 100% auto; background-position: center; background-repeat: no-repeat;height: 560px;">
-
-  <!--=======================navbar=====================================================-->
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-  <div class="container-fluid">
-    <a class="navbar-brand" href="/">Crop Recommendation</a>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-    <div class="collapse navbar-collapse" id="navbarSupportedContent">
-      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-        <li class="nav-item">
-          <a class="nav-link active" aria-current="page" href="#">Home</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="#">Contact</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link disabled">About</a>
-        </li>
-      </ul>
-      <form class="d-flex" role="search">
-        <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
-        <button class="btn btn-outline-success" type="submit">Search</button>
-      </form>
+    <!-- Hero Section -->
+    <div class="bg-cover bg-center h-96" style="background-image: url('/static/agri3.jpg');">
+        <div class="flex items-center justify-center h-full bg-gray-900 bg-opacity-50">
+            <div class="text-center">
+                <h1 class="text-white text-5xl font-bold">Crop and Fertilizer Recommendation System</h1>
+                <p class="text-white text-lg mt-4">Get the best recommendations for your crops and fertilizers based on climatic and soil conditions.</p>
+            </div>
+        </div>
     </div>
-  </div>
-</nav>
 
-<!--==========================================================================================-->
-  <div class="container my-3 mt-3">
-      <h1 class="text-success">Crop and Fertilizer Recommendation System </h1>
-	  
-	  <div class="row">
-		
-		<div class="col-md-6">
-		  <div class="card">
-			<div class="card-body">
-			  <img src="static/crop_front.png" alt="Crop Image" class="crop-image">
-			  <h5 class="card-title">Crop Recommendation</h5>
-			  <p class="card-text">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla convallis libero libero, at mattis urna scelerisque id.</p>
-			  <a href="/crop" class="btn btn-primary">View Recommendations</a>
-			</div>
-		  </div>
-		</div>
-	
-		<div class="col-md-6">
-		  <div class="card">
-			<div class="card-body">
-			  <img src="static/fert_front.jpg" alt="Crop Image" class="crop-image">
-			  <h5 class="card-title">Fertilizer Recommendation</h5>
-			  <p class="card-text">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla convallis libero libero, at mattis urna scelerisque id.</p>
-			  <button class="btn btn-primary">View Recommendations</button>
-			</div>
-		  </div>
-		</div>
-	  </div>
-	  
-  </div>
+    <!-- Main Content -->
+    <div class="container mx-auto px-6 py-12">
+        <div class="flex flex-wrap -mx-6">
+            <div class="w-full md:w-1/2 px-6 mb-12 md:mb-0">
+                <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+                    <img class="w-full h-48 object-cover" src="static/crop_front.png" alt="Crop Recommendation">
+                    <div class="p-6">
+                        <h2 class="text-2xl font-bold mb-2">Crop Recommendation</h2>
+                        <p class="text-gray-700 mb-4">Get the best crop recommendations based on your specific soil and climate conditions.</p>
+                        <a href="/crop" class="bg-green-600 text-white px-4 py-2 rounded-lg">View Recommendations</a>
+                    </div>
+                </div>
+            </div>
+            <div class="w-full md:w-1/2 px-6">
+                <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+                    <img class="w-full h-48 object-cover" src="static/fert_front.jpg" alt="Fertilizer Recommendation">
+                    <div class="p-6">
+                        <h2 class="text-2xl font-bold mb-2">Fertilizer Recommendation</h2>
+                        <p class="text-gray-700 mb-4">Find out which fertilizers are best suited for your crops and soil to maximize yield.</p>
+                        <a href="/fertilizer" class="bg-green-600 text-white px-4 py-2 rounded-lg">View Recommendations</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ENjdO4Dr2bkBIFxQpeoTz1HIcje39Wm4jDKdf19U8gI4ddQ3GYNS7NTKfAdVQSZe" crossorigin="anonymous"></script>
-  </body>
+    <!-- Chat Bot -->
+    <div class="chat-bot-container">
+        <div class="chat-bot-header">
+            Ask the Farmer
+            <img src="https://cdn-icons-png.flaticon.com/512/1828/1828774.png" alt="Close" id="close-chat">
+        </div>
+        <div class="chat-bot-farmer hidden">
+            <img src="/static/farmer.png" alt="3D Farmer">
+        </div>
+        <div class="chat-bot-content">
+            <div class="chat-bot-messages" id="chat-messages"></div>
+            <div class="chat-bot-input">
+                <input type="text" id="chat-input" placeholder="Type your question...">
+                <button id="send-btn">Send</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/chatbot.js') }}"></script>
+</body>
 </html>
