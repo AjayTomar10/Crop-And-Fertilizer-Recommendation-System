@@ -45,7 +45,7 @@ def predict():
             result[i] = "{} is the best crop to be cultivated right there".format(crop)
         else:
             result[i] = "Sorry, we could not determine the best crop to be cultivated with the provided data."
-    return render_template('crop.html',result = result)
+    return render_template('crop.html',result = result,accuracy=accuracy)
 
 
 # Recoomendation Model
