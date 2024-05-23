@@ -29,10 +29,11 @@ def predict():
     humidity = request.form['Humidity']
     ph = request.form['Ph']
     rainfall = request.form['Rainfall']
-
+    
+    model, accuracy = recommendation_model(df)
     
     result=["","",""]
-    prediction = recommendation(N, P, K, temp, humidity, ph, rainfall)
+    prediction = recommendation(N, P, K, temp, humidity, ph, rainfall,model)
 
     crop_dict = {1: "Rice", 2: "Maize", 3: "Jute", 4: "Cotton", 5: "Coconut", 6: "Papaya", 7: "Orange",
                  8: "Apple", 9: "Muskmelon", 10: "Watermelon", 11: "Grapes", 12: "Mango", 13: "Banana",
@@ -58,10 +59,14 @@ crop_dict = {
         'mungbean': 17, 'mothbeans': 18, 'pigeonpeas': 19, 'kidneybeans': 20,
         'chickpea': 21, 'coffee': 22
     }
+df = crop.copy()  # Make a copy of the DataFrame to avoid modifying the original data
+df['crop_num'] = df['label'].map(crop_dict)
+df.drop('label', axis=1, inplace=True)
 
 
 
-def prediction_model(df, features):
+
+def recommendation_model(df):
     
 
     x = df.drop('crop_num', axis=1)
@@ -81,24 +86,28 @@ def prediction_model(df, features):
 
     rfc = RandomForestClassifier()
     rfc.fit(x_train, y_train)
+
+    ypred = rfc.predict(x_test)
+    accuracy = accuracy_score(y_test, ypred)
+    # print("Accuracy : ",accuracy)
     
-#     ypred = rfc.predict(x_test)
-#     accuracy = accuracy_score(y_test, ypred)
-
-    prediction = rfc.predict(features.reshape(1, -1))
-    return prediction[0]
+    return rfc, accuracy
 
 
-def recommendation(N,P,K,temperature,humidity,ph,rainfall):
+def prediction_model( features,model):
+    probabilities = model.predict_proba(features.reshape(1, -1))
+    top_three = [sorted(zip(model.classes_, prob), key=lambda x: x[1], reverse=True)[:3] for prob in probabilities]
+    
+    return top_three
+
+
+def recommendation(N,P,K,temperature,humidity,ph,rainfall,model):
     features=np.array([[N,P,K,temperature,humidity,ph,rainfall]])
     result=[]
-    df = crop.copy()  # Make a copy of the DataFrame to avoid modifying the original data
-    df['crop_num'] = df['label'].map(crop_dict)
-    df.drop('label', axis=1, inplace=True)
-    for i in range(3):
-        val=prediction_model(df,features)
-        result.append(val)
-        df=df[df['crop_num'] != val]
+
+    top_three = prediction_model(features,model)
+    for i in top_three[0]:
+        result.append(i[0])
     
     return result
 # ============================================================================================================
