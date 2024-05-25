@@ -16,7 +16,7 @@
                 <a href="/" class="text-white text-2xl font-bold">Crop & Fertilizer Recommendation</a>
                 <ul>
                     <li><a href="/">Home</a></li>
-                    <li><a href="#">About</a></li>
+                    <li><a href="#about">About</a></li>
                     {% if current_user.is_authenticated %}
                     <li style="float:right"><a href="/logout">Logout</a></li>
                     <li style="float:right"><a href="#">Welcome, {{ current_user.username }}</a></li>
@@ -33,6 +33,10 @@
     </div>
     <div id="newC">
         {% block newC %}{% endblock %}
+    </div>
+
+    <div id="newC">
+        {% block aboutContent %}{% endblock %}
     </div>
 
 
