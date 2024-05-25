@@ -95,9 +95,13 @@
         {% if result %}
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
             {% for crop in result %}
+            {% set sanitized_crop = crop.split(' ')[0].lower() %}
+            <!-- Extract the crop name and convert to lowercase -->
             <div class="bg-white rounded-lg shadow-lg overflow-hidden">
-                <img src="{{ url_for('static', filename='crop_images/' ~ crop ~ '.jpg') }}"
-                    class="w-full h-48 object-cover" alt="{{ crop }}">
+
+
+                <img src="{{ url_for('static', filename='crop_images/' ~ sanitized_crop ~ '.jpg') }}"
+                    class="w-full h-48 object-cover" alt="{{ sanitized_crop }}">
                 <div class="p-6">
                     <h2 class="text-xl font-bold mb-2">Recommended Crop for cultivation is:</h2>
                     <p class="text-gray-700">{{ crop | capitalize }}</p>
@@ -106,8 +110,15 @@
             {% endfor %}
         </div>
         {% endif %}
+
+
     </div>
     {% endblock %}
+
+
+
+
+
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.js"></script>
 </body>
