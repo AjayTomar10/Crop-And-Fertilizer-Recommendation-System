@@ -6,16 +6,82 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score
 from sklearn.preprocessing import StandardScaler
-from flask import Flask,request,render_template
+from flask import Flask, render_template, request, redirect, url_for
+from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
+from flask_pymongo import PyMongo
+from werkzeug.security import generate_password_hash, check_password_hash
+from bson.objectid import ObjectId
 
+# Creating Flask app and linking it to Mongo_DB and creating login credentials 
 # ======================================================================
 app = Flask(__name__)
+app.secret_key = "your_secret_key"
+
+app.config["MONGO_URI"] = "mongodb://localhost:27017/CFRS_db"
+mongo = PyMongo(app)
+
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login'
+
+class User(UserMixin):
+    def __init__(self, username, password, id=None):
+        self.username = username
+        self.password = password
+        self.id = id
+
+@login_manager.user_loader
+def load_user(user_id):
+    user_data = mongo.db.users.find_one({"_id": ObjectId(user_id)})
+    if user_data:
+        return User(username=user_data['username'], password=user_data['password'], id=str(user_data['_id']))
+    return None
 
 @app.route('/')
-def home():
-    return render_template('index.html')
 def index():
-    return render_template("index.html")
+    return render_template('index.html')
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        users = mongo.db.users
+        login_user_data = users.find_one({'username': request.form['username']})
+
+        if login_user_data and check_password_hash(login_user_data['password'], request.form['password']):
+            user = User(username=login_user_data['username'], password=login_user_data['password'], id=str(login_user_data['_id']))
+            login_user(user)
+            return redirect(url_for('index'))
+
+        return 'Invalid username/password combination'
+
+    return render_template('login.html')
+
+@app.route('/register', methods=['POST'])
+def register():
+    if request.method == 'POST':
+        users = mongo.db.users
+        existing_user = users.find_one({'username': request.form['username']})
+
+        if existing_user is None:
+            hashpass = generate_password_hash(request.form['password'])
+            user_id = users.insert_one({'username': request.form['username'], 'password': hashpass}).inserted_id
+            user = User(username=request.form['username'], password=hashpass, id=str(user_id))
+            login_user(user)
+            return redirect(url_for('index'))
+
+        return 'That username already exists!'
+
+    return redirect(url_for('index'))
+
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for('index'))
+
+
+
+# Crop recommendation model
 # =========================================================================
 @app.route('/crop')
 def crop_recommendation():

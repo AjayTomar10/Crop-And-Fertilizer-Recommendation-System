@@ -1,36 +1,37 @@
 <!doctype html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CFPS - Crop and Fertilizer Recommendation System</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/chatbot.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 </head>
-<body class="bg-gray-100">
 
+<body class="bg-gray-100">
+    {% extends "base.html" %}
     <!-- Navbar -->
-    <nav class="bg-green-700 shadow-lg">
-        <div class="container mx-auto px-6 py-3">
-            <div class="flex justify-between items-center">
-                <a href="/" class="text-white text-2xl font-bold">Crop & Fertilizer Recommendation</a>
-                <div>
-                    <input class="px-4 py-2 rounded-lg" type="text" placeholder="Search">
-                    <button class="bg-white text-green-600 px-4 py-2 rounded-lg ml-2">Search</button>
-                </div>
-            </div>
-        </div>
-    </nav>
+
 
     <!-- Hero Section -->
+
     <div class="bg-cover bg-center h-96" style="background-image: url('/static/agri3.jpg');">
         <div class="flex items-center justify-center h-full bg-gray-900 bg-opacity-50">
             <div class="text-center">
                 <h1 class="text-white text-5xl font-bold">Crop and Fertilizer Recommendation System</h1>
-                <p class="text-white text-lg mt-4">Get the best recommendations for your crops and fertilizers based on climatic and soil conditions.</p>
+                <p class="text-white text-lg mt-4">Get the best recommendations for your crops and fertilizers based on
+                    climatic and soil conditions.</p>
             </div>
         </div>
     </div>
+
+
+    {% block content %}
+
+
+    {% if current_user.is_authenticated %}
 
     <!-- Main Content -->
     <div class="container mx-auto px-6 py-12">
@@ -40,7 +41,8 @@
                     <img class="w-full h-48 object-cover" src="static/crop_front.png" alt="Crop Recommendation">
                     <div class="p-6">
                         <h2 class="text-2xl font-bold mb-2">Crop Recommendation</h2>
-                        <p class="text-gray-700 mb-4">Get the best crop recommendations based on your specific soil and climate conditions.</p>
+                        <p class="text-gray-700 mb-4">Get the best crop recommendations based on your specific soil and
+                            climate conditions.</p>
                         <a href="/crop" class="bg-green-600 text-white px-4 py-2 rounded-lg">View Recommendations</a>
                     </div>
                 </div>
@@ -50,8 +52,10 @@
                     <img class="w-full h-48 object-cover" src="static/fert_front.jpg" alt="Fertilizer Recommendation">
                     <div class="p-6">
                         <h2 class="text-2xl font-bold mb-2">Fertilizer Recommendation</h2>
-                        <p class="text-gray-700 mb-4">Find out which fertilizers are best suited for your crops and soil to maximize yield.</p>
-                        <a href="/fertilizer" class="bg-green-600 text-white px-4 py-2 rounded-lg">View Recommendations</a>
+                        <p class="text-gray-700 mb-4">Find out which fertilizers are best suited for your crops and soil
+                            to maximize yield.</p>
+                        <a href="/fertilizer" class="bg-green-600 text-white px-4 py-2 rounded-lg">View
+                            Recommendations</a>
                     </div>
                 </div>
             </div>
@@ -76,6 +80,23 @@
         </div>
     </div>
 
+    {% else %}
+
+    <div class="bg-cover bg-center h-96" style="background-image: url('/static/agri3.jpg');">
+        <div class="flex items-center justify-center h-full bg-gray-900 bg-opacity-50">
+            <div class="text-center">
+                <h1 class="text-white text-5xl font-bold">Crop and Fertilizer Recommendation System</h1>
+                <p class="text-white text-lg mt-4">Get the best recommendations for your crops and fertilizers based on
+                    climatic and soil conditions.</p>
+            </div>
+        </div>
+    </div>
+
+
+    {% endif %}
+    {% endblock %}
+
     <script src="{{ url_for('static', filename='js/chatbot.js') }}"></script>
 </body>
+
 </html>
