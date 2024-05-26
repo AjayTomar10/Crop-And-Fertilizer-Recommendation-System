@@ -4,21 +4,16 @@ from dotenv import load_dotenv
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import MinMaxScaler
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import MinMaxScaler, StandardScaler, LabelEncoder
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score
-from sklearn.preprocessing import StandardScaler
-from flask import Flask, render_template, request, redirect, url_for,jsonify
+from sklearn.metrics import accuracy_score, classification_report
+from flask import Flask, render_template, request, redirect, url_for, jsonify
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from flask_pymongo import PyMongo
 from werkzeug.security import generate_password_hash, check_password_hash
 from bson.objectid import ObjectId
 from datetime import datetime
 from jinja2 import Environment
-
-
-
 
 # Load environment variables
 load_dotenv()
@@ -29,9 +24,7 @@ genai.configure(api_key=API_KEY)
 model = genai.GenerativeModel('gemini-pro')
 chat = model.start_chat(history=[])
 
-
-# Creating Flask app and linking it to Mongo_DB and creating login credentials 
-# ======================================================================
+# Creating Flask app and linking it to Mongo_DB and creating login credentials
 app = Flask(__name__)
 app.secret_key = "your_secret_key"
 
@@ -127,7 +120,7 @@ def chatbot():
 def crop_recommendation():
     return render_template("crop.html")
 
-@app.route("/predict",methods=['POST'])
+@app.route("/predict", methods=['POST'])
 def predict():
     N = request.form.get('Nitrogen')
     P = request.form.get('Phosporus')
@@ -136,25 +129,27 @@ def predict():
     humidity = request.form.get('Humidity')
     ph = request.form.get('Ph')
     rainfall = request.form.get('Rainfall')
-    
-    model, accuracy = recommendation_model(df)
-    
-    result=["","",""]
-    prediction,res = recommendation(N, P, K, temp, humidity, ph, rainfall,model)
 
-    crop_dict = {1: "Rice", 2: "Maize", 3: "Jute", 4: "Cotton", 5: "Coconut", 6: "Papaya", 7: "Orange",
-                 8: "Apple", 9: "Muskmelon", 10: "Watermelon", 11: "Grapes", 12: "Mango", 13: "Banana",
-                 14: "Pomegranate", 15: "Lentil", 16: "Blackgram", 17: "Mungbean", 18: "Mothbeans",
-                 19: "Pigeonpeas", 20: "Kidneybeans", 21: "Chickpea", 22: "Coffee"}
+    model, accuracy = recommendation_model(df)
+
+    result = ["", "", ""]
+    prediction, res = recommendation(N, P, K, temp, humidity, ph, rainfall, model)
+
+    crop_dict = {
+        1: "Rice", 2: "Maize", 3: "Jute", 4: "Cotton", 5: "Coconut", 6: "Papaya", 7: "Orange",
+        8: "Apple", 9: "Muskmelon", 10: "Watermelon", 11: "Grapes", 12: "Mango", 13: "Banana",
+        14: "Pomegranate", 15: "Lentil", 16: "Blackgram", 17: "Mungbean", 18: "Mothbeans",
+        19: "Pigeonpeas", 20: "Kidneybeans", 21: "Chickpea", 22: "Coffee"
+    }
     for i in range(3):
         if prediction[i] in crop_dict:
             crop = crop_dict[prediction[i]]
             result[i] = "{} is the best crop to be cultivated right there".format(crop)
         else:
             result[i] = "Sorry, we could not determine the best crop to be cultivated with the provided data."
-    
+
     store_prediction(current_user.id, res, temp, humidity, ph, rainfall)
-    return render_template('crop.html',result = result,accuracy=accuracy)
+    return render_template('crop.html', result=result, accuracy=accuracy)
 
 # history
 @app.route('/history')
@@ -163,27 +158,73 @@ def history():
     crop_predictions = fetch_prediction_history(current_user.id)
     return render_template('history.html', crop_predictions=crop_predictions)
 
-# Recoomendation Model
+# Fertilizer recommendation model
 # ============================================================================================================
-crop= pd.read_csv("Crop_recommendation.csv")
+@app.route('/fertilizer')
+def fertilizer_recommendation():
+    return render_template("fertilizer.html")
 
+@app.route("/fertilizer_predict", methods=['POST'])
+def fertilizer_predict():
+    temp = float(request.form['Temperature'])
+    humidity = float(request.form['Humidity'])
+    moisture = float(request.form['Moisture'])
+    soil_type = request.form['Soil_Type']
+    crop_type = request.form['Crop_Type']
+    nitro = float(request.form['Nitrogen'])
+    pot = float(request.form['Potassium'])
+    phosp = float(request.form['Phosphorous'])
+
+    # Encode categorical variables
+    soil_type_encoded = encode_soil.transform([soil_type])[0]
+    crop_type_encoded = encode_crop.transform([crop_type])[0]
+
+    # Prepare input data
+    input_data = pd.DataFrame([[temp, humidity, moisture, soil_type_encoded, crop_type_encoded, nitro, pot, phosp]], 
+                              columns=['Temperature', 'Humidity', 'Moisture', 'Soil_Type', 'Crop_Type', 'Nitrogen', 'Potassium', 'Phosphorous'])
+
+    # Predict fertilizer
+    fertilizer_prediction = fertilizer_model.predict(input_data)
+    predicted_fertilizer = encode_ferti.inverse_transform(fertilizer_prediction)
+
+    return render_template('fertilizer.html', result=predicted_fertilizer[0])
+
+# Crop recommendation data preparation
+crop = pd.read_csv("Crop_recommendation.csv")
 crop_dict = {
-        'rice': 1, 'maize': 2, 'jute': 3, 'cotton': 4, 'coconut': 5, 'papaya': 6,
-        'orange': 7, 'apple': 8, 'muskmelon': 9, 'watermelon': 10, 'grapes': 11,
-        'mango': 12, 'banana': 13, 'pomegranate': 14, 'lentil': 15, 'blackgram': 16,
-        'mungbean': 17, 'mothbeans': 18, 'pigeonpeas': 19, 'kidneybeans': 20,
-        'chickpea': 21, 'coffee': 22
-    }
+    'rice': 1, 'maize': 2, 'jute': 3, 'cotton': 4, 'coconut': 5, 'papaya': 6,
+    'orange': 7, 'apple': 8, 'muskmelon': 9, 'watermelon': 10, 'grapes': 11,
+    'mango': 12, 'banana': 13, 'pomegranate': 14, 'lentil': 15, 'blackgram': 16,
+    'mungbean': 17, 'mothbeans': 18, 'pigeonpeas': 19, 'kidneybeans': 20,
+    'chickpea': 21, 'coffee': 22
+}
 df = crop.copy()  # Make a copy of the DataFrame to avoid modifying the original data
 df['crop_num'] = df['label'].map(crop_dict)
 df.drop('label', axis=1, inplace=True)
 
+# Fertilizer recommendation data preparation
+fertilizer_data = pd.read_csv("Fertilizer Prediction.csv")
+fertilizer_data.rename(columns={'Humidity ': 'Humidity', 'Soil Type': 'Soil_Type', 'Crop Type': 'Crop_Type', 'Fertilizer Name': 'Fertilizer'}, inplace=True)
 
+encode_soil = LabelEncoder()
+fertilizer_data.Soil_Type = encode_soil.fit_transform(fertilizer_data.Soil_Type)
 
+encode_crop = LabelEncoder()
+fertilizer_data.Crop_Type = encode_crop.fit_transform(fertilizer_data.Crop_Type)
 
+encode_ferti = LabelEncoder()
+fertilizer_data.Fertilizer = encode_ferti.fit_transform(fertilizer_data.Fertilizer)
+
+x_fertilizer = fertilizer_data.drop('Fertilizer', axis=1)
+y_fertilizer = fertilizer_data.Fertilizer
+
+x_train_fertilizer, x_test_fertilizer, y_train_fertilizer, y_test_fertilizer = train_test_split(x_fertilizer, y_fertilizer, test_size=0.2, random_state=1)
+
+fertilizer_model = RandomForestClassifier()
+fertilizer_model.fit(x_train_fertilizer, y_train_fertilizer)
+
+# Crop recommendation functions
 def recommendation_model(df):
-    
-
     x = df.drop('crop_num', axis=1)
     y = df['crop_num']
 
@@ -204,32 +245,29 @@ def recommendation_model(df):
 
     ypred = rfc.predict(x_test)
     accuracy = accuracy_score(y_test, ypred)
-    # print("Accuracy : ",accuracy)
     
     return rfc, accuracy
 
-
-def prediction_model( features,model):
+def prediction_model(features, model):
     probabilities = model.predict_proba(features.reshape(1, -1))
     top_three = [sorted(zip(model.classes_, prob), key=lambda x: x[1], reverse=True)[:3] for prob in probabilities]
     
     return top_three
 
-
-def recommendation(N,P,K,temperature,humidity,ph,rainfall,model):
-    features=np.array([[N,P,K,temperature,humidity,ph,rainfall]])
-    result=[]
-    res=[]
-    top_three = prediction_model(features,model)
+def recommendation(N, P, K, temperature, humidity, ph, rainfall, model):
+    features = np.array([[N, P, K, temperature, humidity, ph, rainfall]])
+    result = []
+    res = []
+    top_three = prediction_model(features, model)
     for i in top_three[0]:
         result.append(i[0])
         crop_name = get_crop_name(i[0])
         if crop_name != "Unknown":
-            res.append({'crop_name': crop_name, 'N': N, 'P': P, 'K': K})  # Adjusted to populate NPK values
+            res.append({'crop_name': crop_name, 'N': N, 'P': P, 'K': K})
     
-    return result,res
-# ============================================================================================================
+    return result, res
 
+# Utility functions
 def store_prediction(user_id, crop_prediction, temperature, humidity, ph, rainfall):
     current_time = datetime.now()
     mongo.db.crop_prediction_history.insert_one({
@@ -257,43 +295,12 @@ def fetch_prediction_history(user_id):
         history.append(crop_data)
     return history
 
-
-
-def get_NPK_values(crop_prediction):
-    NPK_values = []
-    
-    # Check if crop_prediction is a list
-    if isinstance(crop_prediction, list):
-        for prediction in crop_prediction:
-            # Check if prediction is a dictionary
-            if isinstance(prediction, dict):
-                # Access the 'prediction' key if it exists
-                if 'prediction' in prediction:
-                    crop_num = prediction['prediction']
-                    crop_name = get_crop_name(crop_num)
-                    NPK_values.append({'crop_name': crop_name, 'NPK': [0, 0, 0]})  # Example default value
-                else:
-                    # Handle the case where 'prediction' key is missing
-                    raise KeyError("Key 'prediction' is missing in prediction dictionary")
-            else:
-                # Handle the case where prediction is not a dictionary
-                raise TypeError("Prediction should be a dictionary")
-    else:
-        # Handle the case where crop_prediction is not a list
-        raise ValueError("crop_prediction should be a list.")
-    
-    return NPK_values
-
-
 def get_crop_name(crop_num):
     for crop, num in crop_dict.items():
         if num == crop_num:
             return crop
     return "Unknown"
 
-
-
-# python main
+# Main function to run the Flask app
 if __name__ == "__main__":
     app.run(debug=True)
-
