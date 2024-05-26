@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CFPS - Crop and Fertilizer Recommendation System</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/chatbot.css') }}">
+    <!-- <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/chatbot.css') }}"> -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 
     <style>
@@ -65,23 +65,7 @@
         </div>
     </div>
 
-    <!-- Chat Bot -->
-    <div class="chat-bot-container">
-        <div class="chat-bot-header">
-            Ask the Farmer
-            <img src="https://cdn-icons-png.flaticon.com/512/1828/1828774.png" alt="Close" id="close-chat">
-        </div>
-        <div class="chat-bot-farmer hidden">
-            <img src="/static/farmer.png" alt="3D Farmer">
-        </div>
-        <div class="chat-bot-content">
-            <div class="chat-bot-messages" id="chat-messages"></div>
-            <div class="chat-bot-input">
-                <input type="text" id="chat-input" placeholder="Type your question...">
-                <button id="send-btn">Send</button>
-            </div>
-        </div>
-    </div>
+
 
     {% else %}
 

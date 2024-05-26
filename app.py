@@ -1,3 +1,6 @@
+import os
+import google.generativeai as genai
+from dotenv import load_dotenv
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
@@ -6,11 +9,24 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score
 from sklearn.preprocessing import StandardScaler
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for,jsonify
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from flask_pymongo import PyMongo
 from werkzeug.security import generate_password_hash, check_password_hash
 from bson.objectid import ObjectId
+
+
+
+
+# Load environment variables
+load_dotenv()
+API_KEY = os.getenv('GEMINI_API_KEY')
+
+# Configure Google Generative AI
+genai.configure(api_key=API_KEY)
+model = genai.GenerativeModel('gemini-pro')
+chat = model.start_chat(history=[])
+
 
 # Creating Flask app and linking it to Mongo_DB and creating login credentials 
 # ======================================================================
@@ -79,7 +95,18 @@ def logout():
     logout_user()
     return redirect(url_for('index'))
 
+# Route for rendering the chat page
+@app.route('/chat')
+def chat_page():
+    return render_template('chat.html')
 
+# Route for handling chat messages
+@app.route('/api/chatbot', methods=['POST'])
+def chatbot():
+    data = request.get_json()
+    question = data['message']
+    response = chat.send_message(question)
+    return jsonify(reply=response.text)
 
 # Crop recommendation model
 # =========================================================================
