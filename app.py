@@ -189,19 +189,6 @@ def fertilizer_predict():
 
     return render_template('fertilizer.html', result=predicted_fertilizer[0])
 
-# Crop recommendation data preparation
-crop = pd.read_csv("Crop_recommendation.csv")
-crop_dict = {
-    'rice': 1, 'maize': 2, 'jute': 3, 'cotton': 4, 'coconut': 5, 'papaya': 6,
-    'orange': 7, 'apple': 8, 'muskmelon': 9, 'watermelon': 10, 'grapes': 11,
-    'mango': 12, 'banana': 13, 'pomegranate': 14, 'lentil': 15, 'blackgram': 16,
-    'mungbean': 17, 'mothbeans': 18, 'pigeonpeas': 19, 'kidneybeans': 20,
-    'chickpea': 21, 'coffee': 22
-}
-df = crop.copy()  # Make a copy of the DataFrame to avoid modifying the original data
-df['crop_num'] = df['label'].map(crop_dict)
-df.drop('label', axis=1, inplace=True)
-
 # Fertilizer recommendation data preparation
 fertilizer_data = pd.read_csv("Fertilizer Prediction.csv")
 fertilizer_data.rename(columns={'Humidity ': 'Humidity', 'Soil Type': 'Soil_Type', 'Crop Type': 'Crop_Type', 'Fertilizer Name': 'Fertilizer'}, inplace=True)
@@ -222,6 +209,20 @@ x_train_fertilizer, x_test_fertilizer, y_train_fertilizer, y_test_fertilizer = t
 
 fertilizer_model = RandomForestClassifier()
 fertilizer_model.fit(x_train_fertilizer, y_train_fertilizer)
+
+
+# Crop recommendation data preparation
+crop = pd.read_csv("Crop_recommendation.csv")
+crop_dict = {
+    'rice': 1, 'maize': 2, 'jute': 3, 'cotton': 4, 'coconut': 5, 'papaya': 6,
+    'orange': 7, 'apple': 8, 'muskmelon': 9, 'watermelon': 10, 'grapes': 11,
+    'mango': 12, 'banana': 13, 'pomegranate': 14, 'lentil': 15, 'blackgram': 16,
+    'mungbean': 17, 'mothbeans': 18, 'pigeonpeas': 19, 'kidneybeans': 20,
+    'chickpea': 21, 'coffee': 22
+}
+df = crop.copy()  # Make a copy of the DataFrame to avoid modifying the original data
+df['crop_num'] = df['label'].map(crop_dict)
+df.drop('label', axis=1, inplace=True)
 
 # Crop recommendation functions
 def recommendation_model(df):
