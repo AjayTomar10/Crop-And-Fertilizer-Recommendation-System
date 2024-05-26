@@ -1,0 +1,63 @@
+<!-- Modify history.html -->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CFPS - Crop and Fertilizer Recommendation System</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+
+<body class="bg-gray-100">
+    {% extends "base.html" %}
+
+    {% block newC %}
+    <div class="container mx-auto px-6 py-12">
+        <h1 class="text-center text-3xl text-green-600 font-bold mb-6">Prediction History 📅</h1>
+    
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <table class="table-auto w-full">
+                <thead>
+                    <tr>
+                        <th class="px-4 py-2">N</th>
+                        <th class="px-4 py-2">P</th>
+                        <th class="px-4 py-2">K</th>
+                        <th class="px-4 py-2">Temperature (°C)</th>
+                        <th class="px-4 py-2">Humidity (%)</th>
+                        <th class="px-4 py-2">pH</th>
+                        <th class="px-4 py-2">Rainfall (mm)</th>
+                        <th class="px-4 py-2">Crop 1</th>
+                        <th class="px-4 py-2">Crop 2</th>
+                        <th class="px-4 py-2">Crop 3</th>
+                        <th class="px-4 py-2">Timestamp</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for crop_data in crop_predictions %}
+                    <tr>
+                        {% for prediction in crop_data.crop_predictions %}
+                        <td class="border px-4 py-2">{{ prediction.N }}</td>
+                        <td class="border px-4 py-2">{{ prediction.P }}</td>
+                        <td class="border px-4 py-2">{{ prediction.K }}</td>
+                        {% endfor %}
+                        <td class="border px-4 py-2">{{ crop_data.temperature }}</td>
+                        <td class="border px-4 py-2">{{ crop_data.humidity }}</td>
+                        <td class="border px-4 py-2">{{ crop_data.ph }}</td>
+                        <td class="border px-4 py-2">{{ crop_data.rainfall }}</td>
+                        <td class="border px-4 py-2">{{ crop_data.crop_predictions[0].crop_name if crop_data.crop_predictions|length > 0 else '' }}</td>
+                        <td class="border px-4 py-2">{{ crop_data.crop_predictions[1].crop_name if crop_data.crop_predictions|length > 1 else '' }}</td>
+                        <td class="border px-4 py-2">{{ crop_data.crop_predictions[2].crop_name if crop_data.crop_predictions|length > 2 else '' }}</td>
+                        <td class="border px-4 py-2">{{ crop_data.timestamp }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+{% endblock %}
+
+</body>
+
+</html>

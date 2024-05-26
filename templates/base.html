@@ -19,6 +19,7 @@
                     
                     {% if current_user.is_authenticated %}
                     <li style="float:right"><a href="/logout">Logout</a></li>
+                    <li><a href="{{ url_for('history') }}">History</a></li>
                     <li style="float:right"><a href="#">Welcome, {{ current_user.username }}</a></li>
                     <li style="float:right"><a href="/chat">Ask AI</a></li>
                     {% else %}
@@ -37,10 +38,7 @@
         {% block newC %}{% endblock %}
     </div>
 
-    <div id="newC">
-        {% block aboutContent %}{% endblock %}
-    </div>
-
+    
 
     <div id="loginModal" class="modal hidden fixed inset-0 flex items-center justify-center z-50">
         <div class="modal-content bg-white rounded-lg overflow-hidden shadow-md w-96">

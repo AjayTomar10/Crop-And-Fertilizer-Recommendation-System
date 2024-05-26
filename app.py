@@ -14,6 +14,8 @@ from flask_login import LoginManager, UserMixin, login_user, login_required, log
 from flask_pymongo import PyMongo
 from werkzeug.security import generate_password_hash, check_password_hash
 from bson.objectid import ObjectId
+from datetime import datetime
+from jinja2 import Environment
 
 
 
@@ -52,6 +54,17 @@ def load_user(user_id):
     if user_data:
         return User(username=user_data['username'], password=user_data['password'], id=str(user_data['_id']))
     return None
+
+# Jinja environment with the `str` function
+env = Environment()
+env.filters['str'] = str
+
+# Define the zip_lists function
+def zip_lists(list1, list2):
+    return zip(list1, list2)
+
+# Register the zip_lists function as a custom filter named 'zip'
+app.jinja_env.filters['zip'] = zip_lists
 
 @app.route('/')
 def index():
@@ -113,20 +126,21 @@ def chatbot():
 @app.route('/crop')
 def crop_recommendation():
     return render_template("crop.html")
+
 @app.route("/predict",methods=['POST'])
 def predict():
-    N = request.form['Nitrogen']
-    P = request.form['Phosporus']
-    K = request.form['Potassium']
-    temp = request.form['Temperature']
-    humidity = request.form['Humidity']
-    ph = request.form['Ph']
-    rainfall = request.form['Rainfall']
+    N = request.form.get('Nitrogen')
+    P = request.form.get('Phosporus')
+    K = request.form.get('Potassium')
+    temp = request.form.get('Temperature')
+    humidity = request.form.get('Humidity')
+    ph = request.form.get('Ph')
+    rainfall = request.form.get('Rainfall')
     
     model, accuracy = recommendation_model(df)
     
     result=["","",""]
-    prediction = recommendation(N, P, K, temp, humidity, ph, rainfall,model)
+    prediction,res = recommendation(N, P, K, temp, humidity, ph, rainfall,model)
 
     crop_dict = {1: "Rice", 2: "Maize", 3: "Jute", 4: "Cotton", 5: "Coconut", 6: "Papaya", 7: "Orange",
                  8: "Apple", 9: "Muskmelon", 10: "Watermelon", 11: "Grapes", 12: "Mango", 13: "Banana",
@@ -138,8 +152,16 @@ def predict():
             result[i] = "{} is the best crop to be cultivated right there".format(crop)
         else:
             result[i] = "Sorry, we could not determine the best crop to be cultivated with the provided data."
+    
+    store_prediction(current_user.id, res, temp, humidity, ph, rainfall)
     return render_template('crop.html',result = result,accuracy=accuracy)
 
+# history
+@app.route('/history')
+@login_required
+def history():
+    crop_predictions = fetch_prediction_history(current_user.id)
+    return render_template('history.html', crop_predictions=crop_predictions)
 
 # Recoomendation Model
 # ============================================================================================================
@@ -197,13 +219,77 @@ def prediction_model( features,model):
 def recommendation(N,P,K,temperature,humidity,ph,rainfall,model):
     features=np.array([[N,P,K,temperature,humidity,ph,rainfall]])
     result=[]
-
+    res=[]
     top_three = prediction_model(features,model)
     for i in top_three[0]:
         result.append(i[0])
+        crop_name = get_crop_name(i[0])
+        if crop_name != "Unknown":
+            res.append({'crop_name': crop_name, 'N': N, 'P': P, 'K': K})  # Adjusted to populate NPK values
     
-    return result
+    return result,res
 # ============================================================================================================
+
+def store_prediction(user_id, crop_prediction, temperature, humidity, ph, rainfall):
+    current_time = datetime.now()
+    mongo.db.crop_prediction_history.insert_one({
+        'user_id': ObjectId(user_id),
+        'crop_prediction': crop_prediction,
+        'temperature': temperature,
+        'humidity': humidity,
+        'ph': ph,
+        'rainfall': rainfall,
+        'timestamp': current_time
+    })
+
+def fetch_prediction_history(user_id):
+    crop_predictions = mongo.db.crop_prediction_history.find({"user_id": ObjectId(user_id)})
+    history = []
+    for prediction in crop_predictions:
+        crop_data = {
+            'crop_predictions': prediction.get('crop_prediction', []),
+            'temperature': prediction.get('temperature', 'N/A'),
+            'humidity': prediction.get('humidity', 'N/A'),
+            'ph': prediction.get('ph', 'N/A'),
+            'rainfall': prediction.get('rainfall', 'N/A'),
+            'timestamp': prediction['timestamp']
+        }
+        history.append(crop_data)
+    return history
+
+
+
+def get_NPK_values(crop_prediction):
+    NPK_values = []
+    
+    # Check if crop_prediction is a list
+    if isinstance(crop_prediction, list):
+        for prediction in crop_prediction:
+            # Check if prediction is a dictionary
+            if isinstance(prediction, dict):
+                # Access the 'prediction' key if it exists
+                if 'prediction' in prediction:
+                    crop_num = prediction['prediction']
+                    crop_name = get_crop_name(crop_num)
+                    NPK_values.append({'crop_name': crop_name, 'NPK': [0, 0, 0]})  # Example default value
+                else:
+                    # Handle the case where 'prediction' key is missing
+                    raise KeyError("Key 'prediction' is missing in prediction dictionary")
+            else:
+                # Handle the case where prediction is not a dictionary
+                raise TypeError("Prediction should be a dictionary")
+    else:
+        # Handle the case where crop_prediction is not a list
+        raise ValueError("crop_prediction should be a list.")
+    
+    return NPK_values
+
+
+def get_crop_name(crop_num):
+    for crop, num in crop_dict.items():
+        if num == crop_num:
+            return crop
+    return "Unknown"
 
 
 
