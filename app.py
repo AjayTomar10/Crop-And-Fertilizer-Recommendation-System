@@ -193,6 +193,9 @@ def fertilizer_predict():
 fertilizer_data = pd.read_csv("Fertilizer Prediction.csv")
 fertilizer_data.rename(columns={'Humidity ': 'Humidity', 'Soil Type': 'Soil_Type', 'Crop Type': 'Crop_Type', 'Fertilizer Name': 'Fertilizer'}, inplace=True)
 
+# Ensure that the 'Temperature' column is correctly named
+fertilizer_data.rename(columns={'Temparature': 'Temperature'}, inplace=True)
+
 encode_soil = LabelEncoder()
 fertilizer_data.Soil_Type = encode_soil.fit_transform(fertilizer_data.Soil_Type)
 
@@ -209,7 +212,6 @@ x_train_fertilizer, x_test_fertilizer, y_train_fertilizer, y_test_fertilizer = t
 
 fertilizer_model = RandomForestClassifier()
 fertilizer_model.fit(x_train_fertilizer, y_train_fertilizer)
-
 
 # Crop recommendation data preparation
 crop = pd.read_csv("Crop_recommendation.csv")
