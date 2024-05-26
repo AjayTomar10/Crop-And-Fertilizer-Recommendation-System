@@ -36,11 +36,11 @@
                 <tbody>
                     {% for crop_data in crop_predictions %}
                     <tr>
-                        {% for prediction in crop_data.crop_predictions %}
-                        <td class="border px-4 py-2">{{ prediction.N }}</td>
-                        <td class="border px-4 py-2">{{ prediction.P }}</td>
-                        <td class="border px-4 py-2">{{ prediction.K }}</td>
-                        {% endfor %}
+                        
+                        <td class="border px-4 py-2">{{ crop_data.crop_predictions[0].N if crop_data.crop_predictions|length > 0 else '' }}</td>
+                        <td class="border px-4 py-2">{{ crop_data.crop_predictions[0].P if crop_data.crop_predictions|length > 0 else '' }}</td>
+                        <td class="border px-4 py-2">{{ crop_data.crop_predictions[0].K if crop_data.crop_predictions|length > 0 else '' }}</td>
+                        
                         <td class="border px-4 py-2">{{ crop_data.temperature }}</td>
                         <td class="border px-4 py-2">{{ crop_data.humidity }}</td>
                         <td class="border px-4 py-2">{{ crop_data.ph }}</td>
