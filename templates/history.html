@@ -15,7 +15,7 @@
     {% block newC %}
     <div class="container mx-auto px-6 py-12">
         <h1 class="text-center text-3xl text-green-600 font-bold mb-6">Prediction History 📅</h1>
-    
+
         <div class="bg-white rounded-lg shadow-lg p-6">
             <table class="table-auto w-full">
                 <thead>
@@ -36,11 +36,9 @@
                 <tbody>
                     {% for crop_data in crop_predictions %}
                     <tr>
-                        
                         <td class="border px-4 py-2">{{ crop_data.crop_predictions[0].N if crop_data.crop_predictions|length > 0 else '' }}</td>
                         <td class="border px-4 py-2">{{ crop_data.crop_predictions[0].P if crop_data.crop_predictions|length > 0 else '' }}</td>
                         <td class="border px-4 py-2">{{ crop_data.crop_predictions[0].K if crop_data.crop_predictions|length > 0 else '' }}</td>
-                        
                         <td class="border px-4 py-2">{{ crop_data.temperature }}</td>
                         <td class="border px-4 py-2">{{ crop_data.humidity }}</td>
                         <td class="border px-4 py-2">{{ crop_data.ph }}</td>
@@ -49,14 +47,17 @@
                         <td class="border px-4 py-2">{{ crop_data.crop_predictions[1].crop_name if crop_data.crop_predictions|length > 1 else '' }}</td>
                         <td class="border px-4 py-2">{{ crop_data.crop_predictions[2].crop_name if crop_data.crop_predictions|length > 2 else '' }}</td>
                         <td class="border px-4 py-2">{{ crop_data.timestamp }}</td>
+                        <td class="border px-4 py-2">
+                            <a href="{{ url_for('delete_prediction', prediction_id=crop_data._id) }}" class="text-red-500 hover:text-red-700">Delete</a>
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
     </div>
-    
-{% endblock %}
+
+    {% endblock %}
 
 </body>
 

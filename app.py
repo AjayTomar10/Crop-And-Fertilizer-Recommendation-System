@@ -15,6 +15,8 @@ from bson.objectid import ObjectId
 from datetime import datetime
 from jinja2 import Environment
 
+# ChatBot
+# -----------------------------------------------------------------------------------------------------------------------------
 # Load environment variables
 load_dotenv()
 API_KEY = os.getenv('GEMINI_API_KEY')
@@ -23,12 +25,13 @@ API_KEY = os.getenv('GEMINI_API_KEY')
 genai.configure(api_key=API_KEY)
 model = genai.GenerativeModel('gemini-pro')
 chat = model.start_chat(history=[])
+# ----------------------------------------------------------------------------------------------------------------------------------
 
 # Creating Flask app and linking it to Mongo_DB and creating login credentials
 app = Flask(__name__)
 app.secret_key = "your_secret_key"
 
-app.config["MONGO_URI"] = "mongodb://localhost:27017/CFRS_db"
+app.config["MONGO_URI"] = "mongodb://localhost:27017/CFRS_db"   #//configuring mangodb
 mongo = PyMongo(app)
 
 login_manager = LoginManager()
@@ -115,7 +118,7 @@ def chatbot():
     return jsonify(reply=response.text)
 
 # Crop recommendation model
-# =========================================================================
+# ==================================================================================================================
 @app.route('/crop')
 def crop_recommendation():
     return render_template("crop.html")
@@ -150,68 +153,6 @@ def predict():
 
     store_prediction(current_user.id, res, temp, humidity, ph, rainfall)
     return render_template('crop.html', result=result, accuracy=accuracy)
-
-# history
-@app.route('/history')
-@login_required
-def history():
-    crop_predictions = fetch_prediction_history(current_user.id)
-    return render_template('history.html', crop_predictions=crop_predictions)
-
-# Fertilizer recommendation model
-# ============================================================================================================
-@app.route('/fertilizer')
-def fertilizer_recommendation():
-    return render_template("fertilizer.html")
-
-@app.route("/fertilizer_predict", methods=['POST'])
-def fertilizer_predict():
-    temp = float(request.form['Temperature'])
-    humidity = float(request.form['Humidity'])
-    moisture = float(request.form['Moisture'])
-    soil_type = request.form['Soil_Type']
-    crop_type = request.form['Crop_Type']
-    nitro = float(request.form['Nitrogen'])
-    pot = float(request.form['Potassium'])
-    phosp = float(request.form['Phosphorous'])
-
-    # Encode categorical variables
-    soil_type_encoded = encode_soil.transform([soil_type])[0]
-    crop_type_encoded = encode_crop.transform([crop_type])[0]
-
-    # Prepare input data
-    input_data = pd.DataFrame([[temp, humidity, moisture, soil_type_encoded, crop_type_encoded, nitro, pot, phosp]], 
-                              columns=['Temperature', 'Humidity', 'Moisture', 'Soil_Type', 'Crop_Type', 'Nitrogen', 'Potassium', 'Phosphorous'])
-
-    # Predict fertilizer
-    fertilizer_prediction = fertilizer_model.predict(input_data)
-    predicted_fertilizer = encode_ferti.inverse_transform(fertilizer_prediction)
-
-    return render_template('fertilizer.html', result=predicted_fertilizer[0])
-
-# Fertilizer recommendation data preparation
-fertilizer_data = pd.read_csv("Fertilizer Prediction.csv")
-fertilizer_data.rename(columns={'Humidity ': 'Humidity', 'Soil Type': 'Soil_Type', 'Crop Type': 'Crop_Type', 'Fertilizer Name': 'Fertilizer'}, inplace=True)
-
-# Ensure that the 'Temperature' column is correctly named
-fertilizer_data.rename(columns={'Temparature': 'Temperature'}, inplace=True)
-
-encode_soil = LabelEncoder()
-fertilizer_data.Soil_Type = encode_soil.fit_transform(fertilizer_data.Soil_Type)
-
-encode_crop = LabelEncoder()
-fertilizer_data.Crop_Type = encode_crop.fit_transform(fertilizer_data.Crop_Type)
-
-encode_ferti = LabelEncoder()
-fertilizer_data.Fertilizer = encode_ferti.fit_transform(fertilizer_data.Fertilizer)
-
-x_fertilizer = fertilizer_data.drop('Fertilizer', axis=1)
-y_fertilizer = fertilizer_data.Fertilizer
-
-x_train_fertilizer, x_test_fertilizer, y_train_fertilizer, y_test_fertilizer = train_test_split(x_fertilizer, y_fertilizer, test_size=0.2, random_state=1)
-
-fertilizer_model = RandomForestClassifier()
-fertilizer_model.fit(x_train_fertilizer, y_train_fertilizer)
 
 # Crop recommendation data preparation
 crop = pd.read_csv("Crop_recommendation.csv")
@@ -269,6 +210,86 @@ def recommendation(N, P, K, temperature, humidity, ph, rainfall, model):
             res.append({'crop_name': crop_name, 'N': N, 'P': P, 'K': K})
     
     return result, res
+# ============================================================================================================
+
+# history
+@app.route('/history')
+@login_required
+def history():
+    user_id = ObjectId(current_user.id)
+    crop_predictions = fetch_prediction_history(user_id)
+    return render_template('history.html', crop_predictions=crop_predictions)
+
+@app.route('/delete_prediction/<prediction_id>', methods=['GET'])
+@login_required
+def delete_prediction(prediction_id):
+    try:
+        del_history(prediction_id)
+        return redirect(url_for('history'))
+    except Exception as e:
+        return str(e)
+
+def del_history(prediction_id):
+    user_id = ObjectId(current_user.id)
+    mongo.db.crop_prediction_history.delete_one({'_id': ObjectId(prediction_id), 'user_id': user_id})
+
+
+# Fertilizer recommendation model
+# ============================================================================================================
+@app.route('/fertilizer')
+def fertilizer_recommendation():
+    return render_template("fertilizer.html")
+
+@app.route("/fertilizer_predict", methods=['POST'])
+def fertilizer_predict():
+    temp = float(request.form['Temperature'])
+    humidity = float(request.form['Humidity'])
+    moisture = float(request.form['Moisture'])
+    soil_type = request.form['Soil_Type']
+    crop_type = request.form['Crop_Type']
+    nitro = float(request.form['Nitrogen'])
+    pot = float(request.form['Potassium'])
+    phosp = float(request.form['Phosphorous'])
+
+    # Encode categorical variables
+    soil_type_encoded = encode_soil.transform([soil_type])[0]
+    crop_type_encoded = encode_crop.transform([crop_type])[0]
+
+    # Prepare input data
+    input_data = pd.DataFrame([[temp, humidity, moisture, soil_type_encoded, crop_type_encoded, nitro, pot, phosp]], 
+                              columns=['Temperature', 'Humidity', 'Moisture', 'Soil_Type', 'Crop_Type', 'Nitrogen', 'Potassium', 'Phosphorous'])
+
+    # Predict fertilizer
+    fertilizer_prediction = fertilizer_model.predict(input_data)
+    predicted_fertilizer = encode_ferti.inverse_transform(fertilizer_prediction)
+
+    return render_template('fertilizer.html', result=predicted_fertilizer[0])
+
+# Fertilizer recommendation data preparation
+fertilizer_data = pd.read_csv("Fertilizer Prediction.csv")
+fertilizer_data.rename(columns={'Humidity ': 'Humidity', 'Soil Type': 'Soil_Type', 'Crop Type': 'Crop_Type', 'Fertilizer Name': 'Fertilizer'}, inplace=True)
+
+# Ensure that the 'Temperature' column is correctly named
+fertilizer_data.rename(columns={'Temparature': 'Temperature'}, inplace=True)
+
+encode_soil = LabelEncoder()
+fertilizer_data.Soil_Type = encode_soil.fit_transform(fertilizer_data.Soil_Type)
+
+encode_crop = LabelEncoder()
+fertilizer_data.Crop_Type = encode_crop.fit_transform(fertilizer_data.Crop_Type)
+
+encode_ferti = LabelEncoder()
+fertilizer_data.Fertilizer = encode_ferti.fit_transform(fertilizer_data.Fertilizer)
+
+x_fertilizer = fertilizer_data.drop('Fertilizer', axis=1)
+y_fertilizer = fertilizer_data.Fertilizer
+
+x_train_fertilizer, x_test_fertilizer, y_train_fertilizer, y_test_fertilizer = train_test_split(x_fertilizer, y_fertilizer, test_size=0.2, random_state=1)
+
+fertilizer_model = RandomForestClassifier()
+fertilizer_model.fit(x_train_fertilizer, y_train_fertilizer)
+
+# =======================================================================================================================
 
 # Utility functions
 def store_prediction(user_id, crop_prediction, temperature, humidity, ph, rainfall):
@@ -293,7 +314,8 @@ def fetch_prediction_history(user_id):
             'humidity': prediction.get('humidity', 'N/A'),
             'ph': prediction.get('ph', 'N/A'),
             'rainfall': prediction.get('rainfall', 'N/A'),
-            'timestamp': prediction['timestamp']
+            'timestamp': prediction['timestamp'],
+            '_id': str(prediction['_id'])  # Ensure the _id is included and converted to string
         }
         history.append(crop_data)
     return history
