@@ -5,8 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CFPS - Crop and Fertilizer Recommendation System</title>
-     
-      <!-- Tailwind CSS -->
+
+    <!-- Tailwind CSS -->
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
@@ -87,40 +87,22 @@
                     <button type="submit" class="bg-green-600 text-white px-6 py-3 rounded-lg text-lg font-bold">Get
                         Recommendation</button>
                 </div>
-                <!-- {% if result %}
-                <div class="bg-white shadow-md rounded-lg p-6 text-center">
-                    <p class="text-2xl font-semibold text-gray-700">The accuracy for the required model is:</p>
-                    <p class="text-2xl font-bold text-green-500">{{accuracy}}%</p>
-                </div>
-                {% endif %} -->
             </form>
-        </div>
-
         <!-- Recommendations -->
         {% if result %}
-        <div class="carousel mt-6">
-            <button class="carousel-button prev">&lt;</button>
-            <div class="carousel-track">
-                {% for crop in result %}
-                {% set sanitized_crop = crop.split(' ')[0].lower() %}
-                <div class="carousel-slide">
-                    <div class="bg-white rounded-lg shadow-lg overflow-hidden card mx-4">
-                        <img src="{{ url_for('static', filename='crop_images/' ~ sanitized_crop ~ '.jpg') }}"
-                            class="w-full h-48 object-cover" alt="{{ sanitized_crop }}">
-                        <div class="p-6">
-                            <h2 class="text-xl font-bold mb-2">Recommended Crop for cultivation is:</h2>
-                            <p class="text-gray-700">{{ crop | capitalize }}</p>
-                        </div>
-                    </div>
+        <div class="mt-4 flex justify-center">
+            <div class="bg-white rounded-lg shadow-lg overflow-hidden max-w-md">
+                <img src="{{ url_for('static', filename='crop_images/' ~ result.lower() ~ '.jpg') }}"
+                    class="w-full h-48 object-cover" alt="{{ result }}">
+                <div class="p-6">
+                    <h2 class="text-xl font-bold mb-2">Recommended Crop for Cultivation:</h2>
+                    <p class="text-gray-700">{{ result | capitalize }}</p>
                 </div>
-                {% endfor %}
             </div>
-            <button class="carousel-button next">&gt;</button>
         </div>
-    
         {% endif %}
 
-
+    </div>
     </div>
     {% endblock %}
 
@@ -131,10 +113,10 @@
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.js"></script>
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>
-    
-    
-        
-        
+
+
+
+
 </body>
 
 </html>

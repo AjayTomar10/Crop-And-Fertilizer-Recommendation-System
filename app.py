@@ -14,10 +14,15 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from bson.objectid import ObjectId
 from datetime import datetime
 from jinja2 import Environment
+import pickle
+
+#crop_model
+crop_model = pickle.load(open('random.pkl','rb'))
 
 # ChatBot
 # -----------------------------------------------------------------------------------------------------------------------------
 # Load environment variables
+
 load_dotenv()
 API_KEY = os.getenv('GEMINI_API_KEY')
 
@@ -132,106 +137,49 @@ def predict():
     humidity = request.form.get('Humidity')
     ph = request.form.get('Ph')
     rainfall = request.form.get('Rainfall')
+    data = np.array([[N, P,K,temp, humidity, ph, rainfall]])
+# Making predictions
+    prediction = crop_model.predict(data)
+    ans=prediction[0]
+    store_prediction(current_user.id, ans, temp, humidity, ph, rainfall,N,P,K)
+    return render_template('crop.html', result=ans)
 
-    model, accuracy = recommendation_model(df)
-
-    result = ["", "", ""]
-    prediction, res = recommendation(N, P, K, temp, humidity, ph, rainfall, model)
-
-    crop_dict = {
-        1: "Rice", 2: "Maize", 3: "Jute", 4: "Cotton", 5: "Coconut", 6: "Papaya", 7: "Orange",
-        8: "Apple", 9: "Muskmelon", 10: "Watermelon", 11: "Grapes", 12: "Mango", 13: "Banana",
-        14: "Pomegranate", 15: "Lentil", 16: "Blackgram", 17: "Mungbean", 18: "Mothbeans",
-        19: "Pigeonpeas", 20: "Kidneybeans", 21: "Chickpea", 22: "Coffee"
-    }
-    for i in range(3):
-        if prediction[i] in crop_dict:
-            crop = crop_dict[prediction[i]]
-            result[i] = "{} is the best crop to be cultivated right there".format(crop)
-        else:
-            result[i] = "Sorry, we could not determine the best crop to be cultivated with the provided data."
-
-    store_prediction(current_user.id, res, temp, humidity, ph, rainfall)
-    return render_template('crop.html', result=result, accuracy=accuracy)
-
-# Crop recommendation data preparation
-crop = pd.read_csv("Crop_recommendation.csv")
-crop_dict = {
-    'rice': 1, 'maize': 2, 'jute': 3, 'cotton': 4, 'coconut': 5, 'papaya': 6,
-    'orange': 7, 'apple': 8, 'muskmelon': 9, 'watermelon': 10, 'grapes': 11,
-    'mango': 12, 'banana': 13, 'pomegranate': 14, 'lentil': 15, 'blackgram': 16,
-    'mungbean': 17, 'mothbeans': 18, 'pigeonpeas': 19, 'kidneybeans': 20,
-    'chickpea': 21, 'coffee': 22
-}
-df = crop.copy()  # Make a copy of the DataFrame to avoid modifying the original data
-df['crop_num'] = df['label'].map(crop_dict)
-df.drop('label', axis=1, inplace=True)
-
-# Crop recommendation functions
-def recommendation_model(df):
-    x = df.drop('crop_num', axis=1)
-    y = df['crop_num']
-
-    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=42)
-
-    ms = MinMaxScaler()
-    ms.fit(x_train)
-    x_train = ms.transform(x_train)
-    x_test = ms.transform(x_test)
-
-    sc = StandardScaler()
-    sc.fit(x_train)
-    x_train = sc.transform(x_train)
-    x_test = sc.transform(x_test)
-
-    rfc = RandomForestClassifier()
-    rfc.fit(x_train, y_train)
-
-    ypred = rfc.predict(x_test)
-    accuracy = accuracy_score(y_test, ypred)
     
-    return rfc, accuracy
-
-def prediction_model(features, model):
-    probabilities = model.predict_proba(features.reshape(1, -1))
-    top_three = [sorted(zip(model.classes_, prob), key=lambda x: x[1], reverse=True)[:3] for prob in probabilities]
     
-    return top_three
 
-def recommendation(N, P, K, temperature, humidity, ph, rainfall, model):
-    features = np.array([[N, P, K, temperature, humidity, ph, rainfall]])
-    result = []
-    res = []
-    top_three = prediction_model(features, model)
-    for i in top_three[0]:
-        result.append(i[0])
-        crop_name = get_crop_name(i[0])
-        if crop_name != "Unknown":
-            res.append({'crop_name': crop_name, 'N': N, 'P': P, 'K': K})
-    
-    return result, res
 # ============================================================================================================
 
 # history
+
 @app.route('/history')
 @login_required
 def history():
     user_id = ObjectId(current_user.id)
     crop_predictions = fetch_prediction_history(user_id)
-    return render_template('history.html', crop_predictions=crop_predictions)
+    fertilizer_predictions = fetch_fertilizer_prediction_history(user_id)
+    return render_template('history.html', crop_predictions=crop_predictions, fertilizer_predictions=fertilizer_predictions)
 
-@app.route('/delete_prediction/<prediction_id>', methods=['GET'])
+
+@app.route('/delete_prediction/<prediction_id>/<prediction_type>', methods=['GET'])
 @login_required
-def delete_prediction(prediction_id):
+def delete_prediction(prediction_id, prediction_type):
     try:
-        del_history(prediction_id)
+        if prediction_type == 'crop':
+            del_history(prediction_id)
+        elif prediction_type == 'fertilizer':
+            del_fertilizer_history(prediction_id)
         return redirect(url_for('history'))
     except Exception as e:
         return str(e)
 
+
 def del_history(prediction_id):
     user_id = ObjectId(current_user.id)
     mongo.db.crop_prediction_history.delete_one({'_id': ObjectId(prediction_id), 'user_id': user_id})
+def del_fertilizer_history(prediction_id):
+    user_id = ObjectId(current_user.id)
+    mongo.db.fertilizer_prediction_history.delete_one({'_id': ObjectId(prediction_id), 'user_id': user_id})
+
 
 
 # Fertilizer recommendation model
@@ -263,6 +211,8 @@ def fertilizer_predict():
     fertilizer_prediction = fertilizer_model.predict(input_data)
     predicted_fertilizer = encode_ferti.inverse_transform(fertilizer_prediction)
 
+     # Store the prediction data
+    store_fertilizer_prediction(current_user.id, predicted_fertilizer[0], temp, humidity, moisture, soil_type, crop_type, nitro, pot, phosp)
     return render_template('fertilizer.html', result=predicted_fertilizer[0])
 
 # Fertilizer recommendation data preparation
@@ -292,7 +242,7 @@ fertilizer_model.fit(x_train_fertilizer, y_train_fertilizer)
 # =======================================================================================================================
 
 # Utility functions
-def store_prediction(user_id, crop_prediction, temperature, humidity, ph, rainfall):
+def store_prediction(user_id, crop_prediction, temperature, humidity, ph, rainfall,N,P,K):
     current_time = datetime.now()
     mongo.db.crop_prediction_history.insert_one({
         'user_id': ObjectId(user_id),
@@ -301,7 +251,10 @@ def store_prediction(user_id, crop_prediction, temperature, humidity, ph, rainfa
         'humidity': humidity,
         'ph': ph,
         'rainfall': rainfall,
-        'timestamp': current_time
+        'timestamp': current_time,
+        'N':N,
+        'P':P,
+        'K':K
     })
 
 def fetch_prediction_history(user_id):
@@ -309,22 +262,56 @@ def fetch_prediction_history(user_id):
     history = []
     for prediction in crop_predictions:
         crop_data = {
-            'crop_predictions': prediction.get('crop_prediction', []),
+            'crop_predictions': prediction.get('crop_prediction','N/A'),
             'temperature': prediction.get('temperature', 'N/A'),
             'humidity': prediction.get('humidity', 'N/A'),
             'ph': prediction.get('ph', 'N/A'),
             'rainfall': prediction.get('rainfall', 'N/A'),
             'timestamp': prediction['timestamp'],
+            'N':prediction.get('N'),
+            'P':prediction.get('P'),
+            'K':prediction.get('K'),
             '_id': str(prediction['_id'])  # Ensure the _id is included and converted to string
         }
         history.append(crop_data)
     return history
 
-def get_crop_name(crop_num):
-    for crop, num in crop_dict.items():
-        if num == crop_num:
-            return crop
-    return "Unknown"
+def store_fertilizer_prediction(user_id, fertilizer_prediction, temperature, humidity, moisture, soil_type, crop_type, N, P, K):
+    current_time = datetime.now()
+    mongo.db.fertilizer_prediction_history.insert_one({
+        'user_id': ObjectId(user_id),
+        'fertilizer_prediction': fertilizer_prediction,
+        'temperature': temperature,
+        'humidity': humidity,
+        'moisture': moisture,
+        'soil_type': soil_type,
+        'crop_type': crop_type,
+        'timestamp': current_time,
+        'N': N,
+        'P': P,
+        'K': K
+    })
+def fetch_fertilizer_prediction_history(user_id):
+    fertilizer_predictions = mongo.db.fertilizer_prediction_history.find({"user_id": ObjectId(user_id)})
+    history = []
+    for prediction in fertilizer_predictions:
+        fertilizer_data = {
+            'fertilizer_predictions': prediction.get('fertilizer_prediction', 'N/A'),
+            'temperature': prediction.get('temperature', 'N/A'),
+            'humidity': prediction.get('humidity', 'N/A'),
+            'moisture': prediction.get('moisture', 'N/A'),
+            'soil_type': prediction.get('soil_type', 'N/A'),
+            'crop_type': prediction.get('crop_type', 'N/A'),
+            'timestamp': prediction['timestamp'],
+            'N': prediction.get('N'),
+            'P': prediction.get('P'),
+            'K': prediction.get('K'),
+            '_id': str(prediction['_id'])  # Ensure the _id is included and converted to string
+        }
+        history.append(fertilizer_data)
+    return history
+
+
 
 # Main function to run the Flask app
 if __name__ == "__main__":
